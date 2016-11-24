@@ -186,11 +186,11 @@ try:
                                                         print result
 
                 except KeyboardInterrupt:
-                    break
+                        break
                 except Exception as e:
-                    with open('cardscan4linux-error.log','a') as errlog:
-                        errlog.write("File: " + filepath + "\n" + e + "\n")
-                        sys.exit(bcolors.FAIL + "[*] " + bcolors.ENDC + "Cannot open file '" + filepath + "'.")
+                        with open('cardscan4linux-error.log','a') as errlog:
+                                        errlog.write("File: " + filepath + "\n" + e + "\n")
+                                        sys.exit(bcolors.FAIL + "[*] " + bcolors.ENDC + "Cannot open file '" + filepath + "'.")
 except:
         sys.exit(bcolors.WARNING + "\r[*] " + bcolors.ENDC + "There are no files that match the search.")
 
