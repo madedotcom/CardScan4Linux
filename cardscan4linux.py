@@ -142,7 +142,11 @@ total_count = 0
 
 # Set up throttling
 throttlePeriodBegin = time.time()
+throttlePeriodInt = int(a.throttlePeriod)
 throttleFileCount = 0
+throttleInt = int(a.throttle)
+throttlePatienceCount = len(full_path_list)
+throttlePatiencePosition = 0
 
 # Search through files in the list
 try:
@@ -180,6 +184,22 @@ try:
                                         elif master:
                                                 i += 1
                                                 results.append("\tMASTERCARD:\t " + bcolors.FAIL + master.group().replace(',','').strip() + bcolors.ENDC)
+                                        
+                                        # Trottling
+                                        if (a.throttle != "0"):
+                                                throttlePatiencePosition += 1
+                                                throttleFileCount += 1
+                                                elapsed = time.time() - throttlePeriodBegin
+                                                
+                                                if elapsed > throttlePeriodInt: # Time to begin a new throttle period.
+                                                        throttleFileCount=0
+                                                        throttlePeriodBegin = time.time()
+                                                else: # Check if we need to throttle.
+                                                        if throttleFileCount > throttleInt:
+                                                                waitTime = throttlePeriodInt - elapsed
+                                                                
+                                                                print (str(throttlePatiencePosition)+"/"+str(throttlePatienceCount)+" Processed "+str(throttleFileCount)+" files in "+str(elapsed)+" seconds. Sleeping for "+str(waitTime)+" seconds.")
+                                                                time.sleep(waitTime)
 
                                 if i > 0:
                                         if a.output:
@@ -192,20 +212,6 @@ try:
                                                 for result in results:
                                                         print result
 
-                # Trottling
-                if a.trottle not == '0':
-                    throttleFileCount++
-                    elapsed = time.time() - throttlePeriodBegin
-                    
-                    if elapsed > a.throttlePeriod: # Time to begin a new throttle period.
-                        throttleFileCount=0
-                        throttlePeriodBegin = time.time()
-                    else: # Check if we need to throttle.
-                        if throttleFileCount >= a.throttle:
-                            waitTime = a.throttlePeriod - elapsed
-                            
-                            print ("Processed "+str(throttleFileCount)+" files in "+str(elapsed)+" seconds. Sleeping for "+str(waitTime)+" seconds.")
-                            time.sleep(waitTime)
                 
                 
                 except KeyboardInterrupt:
@@ -214,6 +220,8 @@ try:
                         with open('cardscan4linux-error.log','a') as errlog:
                                         errlog.write("File: " + filepath + "\n" + e + "\n")
                                         sys.exit(bcolors.FAIL + "[*] " + bcolors.ENDC + "Cannot open file '" + filepath + "'.")
+                
+
 except:
         sys.exit(bcolors.WARNING + "\r[*] " + bcolors.ENDC + "There are no files that match the search.")
 
