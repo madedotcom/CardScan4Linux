@@ -43,7 +43,7 @@ p.add_argument('-x','--exclude',dest='exclude_dir',help='Input the directories t
 p.add_argument('-max','--max-size',help='Enter the maximum file-size to search for (Default 100 Kilobytes). Units: "c" for bytes, "k" for Kilobytes, "M" for Megabytes',dest="maxsize",default="100k")
 p.add_argument('-min','--min-size',help='Enter the minimum file-size to search for (Default 16 Bytes). Units: "c" for bytes, "k" for Kilobytes, "M" for Megabytes',dest="minsize",default="16c")
 p.add_argument('-mount','--scan-mount',dest='mounted',help='Enable to scan the mounted remote file systems (Default is off.)',required=False,action='store_true')
-p.add_argument('-t','--throttle',help='Enter the maximum number of files to be scanned per --throttle-period. Defaults to 0, which is no throttle.',dest="throttle",default="0")
+p.add_argument('-t','--throttle',help='Enter the percentage of the --throttle-period that may be used to scan a block of files. Defaults to 100, which is no throttle.',dest="throttle",default="100")
 p.add_argument('-tp','--throttle-period',help='Enter the period in seconds for the trottle. Defaults to 1 second.',dest="throttlePeriod",default="1")
 p.add_argument('-v','--verbose',dest='verbose',help='Display verbose messages (Warning: output can be huge).',required=False,action='store_true')
 a = p.parse_args()
@@ -142,9 +142,9 @@ total_count = 0
 
 # Set up throttling
 throttlePeriodBegin = time.time()
-throttlePeriodInt = int(a.throttlePeriod)
+throttlePeriod = float(a.throttlePeriod)
+throttlePeriodActive = throttlePeriod * float(a.throttle)
 throttleFileCount = 0
-throttleInt = int(a.throttle)
 throttlePatienceCount = len(full_path_list)
 throttlePatiencePosition = 0
 
@@ -185,21 +185,20 @@ try:
                                                 i += 1
                                                 results.append("\tMASTERCARD:\t " + bcolors.FAIL + master.group().replace(',','').strip() + bcolors.ENDC)
                                         
-                                        # Trottling
-                                        if (a.throttle != "0"):
-                                                throttlePatiencePosition += 1
-                                                throttleFileCount += 1
-                                                elapsed = time.time() - throttlePeriodBegin
+                                        
+                                # Trottling
+                                if (a.throttle != "100"):
+                                        throttlePatiencePosition += 1
+                                        throttleFileCount += 1
+                                        elapsed = time.time() - throttlePeriodBegin
+                                        
+                                        if elapsed > throttlePeriodActive: # Time to begin a new throttle period.
+                                                throttlePeriodBegin = time.time()
+                                                waitTime = throttlePeriod - elapsed
                                                 
-                                                if elapsed > throttlePeriodInt: # Time to begin a new throttle period.
-                                                        throttleFileCount=0
-                                                        throttlePeriodBegin = time.time()
-                                                else: # Check if we need to throttle.
-                                                        if throttleFileCount > throttleInt:
-                                                                waitTime = throttlePeriodInt - elapsed
-                                                                
-                                                                print (str(throttlePatiencePosition)+"/"+str(throttlePatienceCount)+" Processed "+str(throttleFileCount)+" files in "+str(elapsed)+" seconds. Sleeping for "+str(waitTime)+" seconds.")
-                                                                time.sleep(waitTime)
+                                                print (str(throttlePatiencePosition)+"/"+str(throttlePatienceCount)+" Processed "+str(throttleFileCount)+" files in "+str(elapsed)+" seconds. Sleeping for "+str(waitTime)+" seconds."+" seconds. tpa="+str(throttlePeriodActive))
+                                                time.sleep(waitTime)
+                                                throttleFileCount=0
 
                                 if i > 0:
                                         if a.output:
