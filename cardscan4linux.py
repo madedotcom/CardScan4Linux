@@ -12,6 +12,7 @@
 
 # Modules
 import timeit
+import time
 import re
 import os
 import sys
@@ -42,6 +43,8 @@ p.add_argument('-x','--exclude',dest='exclude_dir',help='Input the directories t
 p.add_argument('-max','--max-size',help='Enter the maximum file-size to search for (Default 100 Kilobytes). Units: "c" for bytes, "k" for Kilobytes, "M" for Megabytes',dest="maxsize",default="100k")
 p.add_argument('-min','--min-size',help='Enter the minimum file-size to search for (Default 16 Bytes). Units: "c" for bytes, "k" for Kilobytes, "M" for Megabytes',dest="minsize",default="16c")
 p.add_argument('-mount','--scan-mount',dest='mounted',help='Enable to scan the mounted remote file systems (Default is off.)',required=False,action='store_true')
+p.add_argument('-t','--throttle',help='Enter the maximum number of files to be scanned per --throttle-period. Defaults to 0, which is no throttle.',dest="throttle",default="0")
+p.add_argument('-tp','--throttle-period',help='Enter the period in seconds for the trottle. Defaults to 1 second.',dest="throttlePeriod",default="1")
 p.add_argument('-v','--verbose',dest='verbose',help='Display verbose messages (Warning: output can be huge).',required=False,action='store_true')
 a = p.parse_args()
 
@@ -137,6 +140,10 @@ regexMaster = re.compile("([^0-9-]|^)(5[0-9]{3}( |-|)([0-9]{4})( |-|)([0-9]{4})(
 # Log file - counting
 total_count = 0
 
+# Set up throttling
+throttlePeriodBegin = time.time()
+throttleFileCount = 0
+
 # Search through files in the list
 try:
         for filepath in full_path_list:
@@ -185,6 +192,22 @@ try:
                                                 for result in results:
                                                         print result
 
+                # Trottling
+                if a.trottle not == '0':
+                    throttleFileCount++
+                    elapsed = time.time() - throttlePeriodBegin
+                    
+                    if elapsed > a.throttlePeriod: # Time to begin a new throttle period.
+                        throttleFileCount=0
+                        throttlePeriodBegin = time.time()
+                    else: # Check if we need to throttle.
+                        if throttleFileCount >= a.throttle:
+                            waitTime = a.throttlePeriod - elapsed
+                            
+                            print ("Processed "+str(throttleFileCount)+" files in "+str(elapsed)+" seconds. Sleeping for "+str(waitTime)+" seconds.")
+                            time.sleep(waitTime)
+                
+                
                 except KeyboardInterrupt:
 						break
                 except Exception as e:
