@@ -43,7 +43,7 @@ p.add_argument('-x','--exclude',dest='exclude_dir',help='Input the directories t
 p.add_argument('-max','--max-size',help='Enter the maximum file-size to search for (Default 100 Kilobytes). Units: "c" for bytes, "k" for Kilobytes, "M" for Megabytes',dest="maxsize",default="100k")
 p.add_argument('-min','--min-size',help='Enter the minimum file-size to search for (Default 16 Bytes). Units: "c" for bytes, "k" for Kilobytes, "M" for Megabytes',dest="minsize",default="16c")
 p.add_argument('-mount','--scan-mount',dest='mounted',help='Enable to scan the mounted remote file systems (Default is off.)',required=False,action='store_true')
-p.add_argument('-t','--throttle',help='Enter the percentage of the --throttle-period that may be used to scan a block of files. Defaults to 100, which is no throttle.',dest="throttle",default="100")
+p.add_argument('-t','--throttle',help='Enter the fraction (0.00 - 1.00) of the --throttle-period that may be used to scan a block of files. Defaults to 1, which is no throttle.',dest="throttle",default="1")
 p.add_argument('-tp','--throttle-period',help='Enter the period in seconds for the trottle. Defaults to 1 second.',dest="throttlePeriod",default="1")
 p.add_argument('-v','--verbose',dest='verbose',help='Display verbose messages (Warning: output can be huge).',required=False,action='store_true')
 a = p.parse_args()
@@ -193,11 +193,12 @@ try:
                                         elapsed = time.time() - throttlePeriodBegin
                                         
                                         if elapsed > throttlePeriodActive: # Time to begin a new throttle period.
-                                                throttlePeriodBegin = time.time()
                                                 waitTime = throttlePeriod - elapsed
                                                 
                                                 print (str(throttlePatiencePosition)+"/"+str(throttlePatienceCount)+" Processed "+str(throttleFileCount)+" files in "+str(elapsed)+" seconds. Sleeping for "+str(waitTime)+" seconds."+" seconds. tpa="+str(throttlePeriodActive))
                                                 time.sleep(waitTime)
+                                                
+                                                throttlePeriodBegin = time.time()
                                                 throttleFileCount=0
 
                                 if i > 0:
