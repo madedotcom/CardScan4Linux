@@ -136,6 +136,10 @@ print (bcolors.OKGREEN + "[*] " + bcolors.ENDC + "File-system search complete. "
 regexAmex = re.compile("([^0-9-]|^)(3(4[0-9]{2}|7[0-9]{2})( |-|)[0-9]{6}( |-|)[0-9]{5})([^0-9-]|$)") #16 Digit AMEX
 regexVisa = re.compile("([^0-9-]|^)(4[0-9]{3}( |-|)([0-9]{4})( |-|)([0-9]{4})( |-|)([0-9]{4}))([^0-9-]|$)")
 regexMaster = re.compile("([^0-9-]|^)(5[0-9]{3}( |-|)([0-9]{4})( |-|)([0-9]{4})( |-|)([0-9]{4}))([^0-9-]|$)")
+regexDiners = re.compile("^3(?:0[0-5]|[68][0-9])[0-9]{11}")
+regexDiscover = re.compile("^6(?:011|5[0-9]{2})[0-9]{12}")
+regexJCB = re.compile("^6(?:011|5[0-9]{2})[0-9]{12}")
+
 
 # Log file - counting
 total_count = 0
@@ -166,9 +170,12 @@ try:
 
                                 # Loops through each item in list
                                 for item in head:
-                                        amex = re.search(regexAmex, item.rstrip('\n'))
-                                        visa = re.search(regexVisa, item.rstrip('\n'))
-                                        master = re.search(regexMaster, item.rstrip('\n'))
+					amex = re.search(regexAmex, item.rstrip('\n'))
+					visa = re.search(regexVisa, item.rstrip('\n'))
+					master = re.search(regexMaster, item.rstrip('\n'))
+					diners = re.search(regexDiners, item.rstrip('\n'))
+					discover = re.search(regexDiscover, item.rstrip('\n'))
+					JCB = re.search(regexJCB, item.rstrip('\n'))
 
                                         # Prints if matches AMEX
                                         if amex:
@@ -184,6 +191,21 @@ try:
                                         elif master:
                                                 i += 1
                                                 results.append("\tMASTERCARD:\t " + bcolors.FAIL + master.group().replace(',','').strip() + bcolors.ENDC)
+
+                                        # Prints if matches Diners Club
+                                        elif diners:
+                                                i += 1
+                                                results.append("\DINERSCLUB:\t " + bcolors.FAIL + diners.group().replace(',','').strip() + bcolors.ENDC)
+
+                                        # Prints if matches Discover
+                                        elif discover:
+                                                i += 1
+                                                results.append("\DISCOVER:\t " + bcolors.FAIL + discover.group().replace(',','').strip() + bcolors.ENDC)
+
+                                        # Prints if matches Mastercard
+                                        elif JCB:
+                                                i += 1
+                                                results.append("\JCB:\t " + bcolors.FAIL + JCB.group().replace(',','').strip() + bcolors.ENDC)
                                         
                                         
                                 # Trottling
